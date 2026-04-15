@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhoneControl RAT v5.0 - Advanced Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #16213e 50%, #0f3460 100%);
+            color: #00d4ff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                linear-gradient(0deg, transparent 24%, rgba(0, 212, 255, .05) 25%, rgba(0, 212, 255, .05) 26%, transparent 27%, transparent 74%, rgba(0, 212, 255, .05) 75%, rgba(0, 212, 255, .05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(0, 212, 255, .05) 25%, rgba(0, 212, 255, .05) 26%, transparent 27%, transparent 74%, rgba(0, 212, 255, .05) 75%, rgba(0, 212, 255, .05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
+            padding: 25px;
+            min-height: 100vh;
+            max-width: 1600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+            opacity: 1;
+            transition: all 0.3s ease;
+        }
+
+        .container.blur-screen {
+            filter: blur(20px) grayscale(100%);
+            pointer-events: none;
+        }
+
+        /* ===== LEFT PANEL ===== */
+        .left-panel {
+            background: linear-gradient(135deg, rgba(15, 52, 96, 0.8) 0%, rgba(22, 33, 62, 0.6) 100%);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.2), inset 0 0 30px rgba(0, 212, 255, 0.05);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+            height: fit-content;
+            position: sticky;
+            top: 25px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: #00ff88;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #ff00ff;
+            text-shadow: 0 0 10px #00ff88;
+        }
+
+        .target-info {
+            margin-bottom: 30px;
+        }
+
+        .info-row {
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: #00d4ff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .info-value {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid #00d4ff;
+            border-left: 4px solid #00ff88;
+            padding: 10px 12px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .info-value.locked {
+            border-color: #ff0055;
+            border-left-color: #ff0055;
+            background: rgba(255, 0, 85, 0.15);
+            color: #ff0055;
+        }
+
+        .info-value.locked::after {
+            content: ' [RESTRICTED]';
+            animation: redPulse 0.6s infinite;
+            font-weight: bold;
+        }
+
+        @keyframes redPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ===== RIGHT PANEL ===== */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .access-card {
+            background: linear-gradient(135deg, rgba(15, 52, 96, 0.7) 0%, rgba(22, 33, 62, 0.5) 100%);
+            border: 2px solid #ff00ff;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .access-card::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(45deg, #ff00ff, #00d4ff, #ff00ff);
+            border-radius: 12px;
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.3s;
+        }
+
+        .access-card:hover {
+            border-color: #00ff88;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+            transform: translateY(-5px) scale(1.05);
+        }
+
+        .card-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 212, 255, 0.15);
+            border: 2px solid #00d4ff;
+            border-radius: 50%;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #00ff88;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 10px;
+            color: #00d4ff;
+            line-height: 1.4;
+        }
+
+        .card-access-denied {
+            border-color: #ff0055 !important;
+            box-shadow: 0 0 30px rgba(255, 0, 85, 0.6) !important;
+            animation: redShake 0.4s;
+        }
+
+        .card-access-denied .card-title {
+            color: #ff0055;
+            animation: redBlink 0.5s infinite;
+        }
+
+        @keyframes redShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes redBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ===== STATUS & INFO ===== */
+        .status-panel {
+            background: linear-gradient(135deg, rgba(15, 52, 96, 0.8) 0%, rgba(22, 33, 62, 0.6) 100%);
+            border: 2px solid #00d4ff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .status-item {
+            padding: 12px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid #00d4ff;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+
+        .status-label {
+            color: #00d4ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .status-value {
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            margin-top: 4px;
+        }
+
+        .terminal-log {
+            background: linear-gradient(135deg, rgba(15, 52, 96, 0.8) 0%, rgba(22, 33, 62, 0.6) 100%);
+            border: 2px solid #00d4ff;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 10px;
+            color: #00ff88;
+            max-height: 200px;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            font-family: 'Courier New', monospace;
+        }
+
+        .terminal-log p {
+            margin: 4px 0;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .log-time {
+            color: #00d4ff;
+        }
+
+        .log-success {
+            color: #00ff88;
+        }
+
+        .log-error {
+            color: #ff0055;
+        }
+
+        /* ===== ACCESS DENIED OVERLAY ===== */
+        .denied-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(25px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .denied-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .denied-box {
+            border: 4px solid #ff0055;
+            padding: 50px 40px;
+            background: rgba(255, 0, 85, 0.05);
+            box-shadow: 0 0 100px rgba(255, 0, 85, 0.6), inset 0 0 50px rgba(255, 0, 85, 0.2);
+            border-radius: 15px;
+            text-align: center;
+            animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            width: 90%;
+            max-width: 700px;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .denied-title {
+            font-size: clamp(40px, 10vw, 80px);
+            font-weight: 900;
+            color: #ff0055;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            text-shadow: 0 0 30px #ff0055, 0 0 60px rgba(255, 0, 85, 0.5);
+            margin-bottom: 15px;
+            animation: glitch 0.2s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-5px, 5px); }
+            40% { transform: translate(-5px, -5px); }
+            60% { transform: translate(5px, 5px); }
+            80% { transform: translate(5px, -5px); }
+        }
+
+        .denied-subtitle {
+            font-size: clamp(16px, 4vw, 24px);
+            color: #ff6688;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            animation: blink2 0.8s infinite;
+        }
+
+        @keyframes blink2 {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.3; }
+        }
+
+        /* ===== EDITABLE CONFIG SECTION ===== */
+        .config-section {
+            background: linear-gradient(135deg, rgba(15, 52, 96, 0.8) 0%, rgba(22, 33, 62, 0.6) 100%);
+            border: 2px dashed #ff00ff;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.15);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .config-title {
+            font-size: 14px;
+            color: #ff00ff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            font-weight: 900;
+            border-bottom: 2px solid #00ff88;
+            padding-bottom: 10px;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .config-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .config-label {
+            font-size: 10px;
+            color: #00d4ff;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .config-input {
+            padding: 10px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .config-input:focus {
+            outline: none;
+            background: rgba(0, 212, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            border-color: #00ff88;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px;
+            background: rgba(0, 212, 255, 0.15);
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: #00d4ff;
+            color: #0f3460;
+            box-shadow: 0 0 25px rgba(0, 212, 255, 0.7);
+        }
+
+        .footer-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            padding: 15px 25px;
+            background: rgba(255, 0, 255, 0.2);
+            border: 2px solid #ff00ff;
+            color: #ff00ff;
+            cursor: pointer;
+            border-radius: 6px;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .footer-btn:hover {
+            background: #ff00ff;
+            color: #0f3460;
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.7);
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .left-panel {
+                position: relative;
+                top: auto;
+                height: auto;
+            }
+
+            .cards-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+
+            .status-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                gap: 15px;
+            }
+
+            .left-panel {
+                padding: 20px;
+            }
+
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .status-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .card-icon {
+                font-size: 32px;
+                width: 50px;
+                height: 50px;
+            }
+
+            .card-title {
+                font-size: 11px;
+            }
+
+            .card-desc {
+                font-size: 9px;
+                display: none;
+            }
+
+            .section-title {
+                font-size: 14px;
+            }
+
+            .denied-box {
+                padding: 40px 25px;
+            }
+
+            .denied-title {
+                font-size: clamp(30px, 8vw, 50px);
+            }
+
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .left-panel {
+                padding: 15px;
+            }
+
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .access-card {
+                padding: 12px;
+            }
+
+            .card-icon {
+                font-size: 28px;
+                width: 45px;
+                height: 45px;
+                margin-bottom: 8px;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .status-item {
+                padding: 10px;
+                font-size: 10px;
+            }
+
+            .terminal-log {
+                max-height: 150px;
+                font-size: 9px;
+            }
+
+            .footer-btn {
+                bottom: 15px;
+                right: 15px;
+                padding: 12px 18px;
+                font-size: 10px;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00d4ff;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <!-- MAIN INTERFACE -->
+    <div class="container" id="mainContainer">
+        <!-- LEFT PANEL -->
+        <div class="left-panel">
+            <div class="section-title">► TARGET DEVICE</div>
+            
+            <div class="target-info" id="targetInfo">
+                <!-- Dynamically populated from victimData -->
+            </div>
+
+            <div class="section-title" style="margin-top: 30px;">► SYSTEM SPECS</div>
+            <div class="target-info" id="systemSpecs">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="right-panel">
+            <!-- ACCESS CARDS -->
+            <div class="cards-grid" id="cardsContainer">
+                <!-- Dynamically populated -->
+            </div>
+
+            <!-- STATUS PANEL -->
+            <div class="status-panel">
+                <div class="section-title" style="margin: 0 0 15px 0;">► CONNECTION STATUS</div>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-label">State</div>
+                        <div class="status-value">● ACTIVE</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Session ID</div>
+                        <div class="status-value" id="sessionId">RAT-20260416</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Encryption</div>
+                        <div class="status-value">AES-256</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Latency</div>
+                        <div class="status-value">42ms</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Data Used</div>
+                        <div class="status-value">2.3 GB</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Uptime</div>
+                        <div class="status-value">15h 32m</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TERMINAL LOG -->
+            <div class="terminal-log" id="terminalLog">
+                <p><span class="log-time">[14:32:15]</span> <span class="log-success">✓ Connection established</span></p>
+                <p><span class="log-time">[14:32:16]</span> <span class="log-success">✓ System initialized</span></p>
+                <p><span class="log-time">[14:32:18]</span> <span class="log-success">✓ All modules active</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACCESS DENIED OVERLAY -->
+    <div class="denied-overlay" id="deniedOverlay">
+        <div class="denied-box">
+            <div class="denied-title">⚠ ACCESS DENIED</div>
+            <div class="denied-subtitle">Unauthorized Access Detected</div>
+            <div class="denied-subtitle" style="margin-top: 15px; animation: blink2 1s infinite; font-size: 14px;">Closing Session...</div>
+        </div>
+    </div>
+
+    <!-- CONFIG EDITOR (Hidden) -->
+    <div class="config-section" id="configSection">
+        <div class="config-title">⚙ Edit Target Details</div>
+        <div class="config-grid" id="configGrid">
+            <!-- Dynamically populated -->
+        </div>
+        <div class="btn-group">
+            <button class="btn" onclick="saveConfig()">✓ Apply Changes</button>
+            <button class="btn" onclick="resetConfig()">↻ Reset</button>
+            <button class="btn" onclick="toggleConfig()">✕ Close</button>
+        </div>
+    </div>
+
+    <!-- FOOTER BUTTON -->
+    <button class="footer-btn" id="configBtn" onclick="toggleConfig()">⚙ EDIT CONFIG</button>
+
+    <script>
+        // ===== EDITABLE VICTIM DATA =====
+        const victimData = {
+            ownerName: "Tanya Tripathi",
+            phoneNumber: "+91 9956786978",
+            email: " tripathitanya963@gmail.com",
+            deviceIMEI: "Access Denied",
+            deviceModel: "Access Denied",
+            deviceID: "87f4a5d2-c9e1-4b3f-9e2a-1c8d7b4a3f6e",
+            serialNumber: "RF8K10TDXQX",
+            osVersion: "Access Denied",
+            ram: "Access Denied",
+            storage: "Access Denied",
+            processor: "Access Denied",
+            battery: "Access Denied%",
+            location: "Access Denied",
+            network: "5G LTE",
+            screenTime: "4h 32m",
+            uptime: "1d 2h"
+        };
+
+        const accessModules = [
+            { name: "System Control", icon: "⚙", desc: "Device settings & remote control" },
+            { name: "File Manager", icon: "📁", desc: "Browse all device files" },
+            { name: "Call Logs", icon: "☎", desc: "Complete call history" },
+            { name: "SMS Manager", icon: "✉", desc: "Text message access" },
+            { name: "GPS Tracker", icon: "🌍", desc: "Real-time location" },
+            { name: "Camera Access", icon: "📷", desc: "Front & rear cameras" },
+            { name: "Gallery", icon: "🖼", desc: "Photos & videos" },
+            { name: "App Monitor", icon: "📱", desc: "Installed applications" },
+            { name: "Audio Capture", icon: "🎤", desc: "Microphone recording" },
+            { name: "Messages", icon: "💬", desc: "WhatsApp, Telegram" },
+            { name: "Contacts", icon: "👥", desc: "All contact details" },
+            { name: "Credentials", icon: "🔐", desc: "Saved passwords" }
+        ];
+
+        // ===== POPULATE PAGE =====
+        function initializePage() {
+            populateTargetInfo();
+            populateSystemSpecs();
+            populateAccessCards();
+            populateConfigForm();
+            
+            // 5-second countdown to ACCESS DENIED
+            setTimeout(() => {
+                triggerAccessDenied();
+            }, 5000);
+        }
+
+        function populateTargetInfo() {
+            const container = document.getElementById('targetInfo');
+            container.innerHTML = `
+                <div class="info-row">
+                    <div class="info-label">Owner Name</div>
+                    <div class="info-value">${victimData.ownerName}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Phone Number</div>
+                    <div class="info-value locked">${victimData.phoneNumber}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Email Address</div>
+                    <div class="info-value locked">${victimData.email}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Device IMEI</div>
+                    <div class="info-value locked">${victimData.deviceIMEI}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Device Model</div>
+                    <div class="info-value">${victimData.deviceModel}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Device ID</div>
+                    <div class="info-value locked">${victimData.deviceID}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Serial Number</div>
+                    <div class="info-value locked">${victimData.serialNumber}</div>
+                </div>
+            `;
+        }
+
+        function populateSystemSpecs() {
+            const container = document.getElementById('systemSpecs');
+            container.innerHTML = `
+                <div class="info-row">
+                    <div class="info-label">OS Version</div>
+                    <div class="info-value">${victimData.osVersion}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">RAM</div>
+                    <div class="info-value">${victimData.ram}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Storage</div>
+                    <div class="info-value">${victimData.storage}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Processor</div>
+                    <div class="info-value">${victimData.processor}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Battery</div>
+                    <div class="info-value">${victimData.battery}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Location (GPS)</div>
+                    <div class="info-value locked">${victimData.location}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Network</div>
+                    <div class="info-value">${victimData.network}</div>
+                </div>
+            `;
+        }
+
+        function populateAccessCards() {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = accessModules.map(module => `
+                <div class="access-card" onclick="handleCardClick(this)">
+                    <div class="card-icon">${module.icon}</div>
+                    <div class="card-title">${module.name}</div>
+                    <div class="card-desc">${module.desc}</div>
+                </div>
+            `).join('');
+        }
+
+        function populateConfigForm() {
+            const grid = document.getElementById('configGrid');
+            grid.innerHTML = Object.entries(victimData).map(([key, value]) => `
+                <div class="config-group">
+                    <label class="config-label">${key.replace(/([A-Z])/g, ' $1').toUpperCase()}</label>
+                    <input type="text" class="config-input" data-field="${key}" value="${value}">
+                </div>
+            `).join('');
+        }
+
+        function handleCardClick(element) {
+            if (element.classList.contains('card-access-denied')) return;
+            
+            element.classList.add('card-access-denied');
+            element.querySelector('.card-title').textContent = 'ACCESS DENIED';
+            
+            const time = new Date().toLocaleTimeString('en-US', {hour12:false});
+            const log = document.getElementById('terminalLog');
+            log.innerHTML += `<p><span class="log-time">[${time}]</span> <span class="log-error">✖ ERROR: Permission denied (${accessModules[Array.from(element.parentNode.children).indexOf(element)].name})</span></p>`;
+            
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+
+        function toggleConfig() {
+            document.getElementById('configSection').style.display = 
+                document.getElementById('configSection').style.display === 'block' ? 'none' : 'block';
+        }
+
+        function saveConfig() {
+            document.querySelectorAll('.config-input').forEach(input => {
+                victimData[input.dataset.field] = input.value;
+            });
+            populateTargetInfo();
+            populateSystemSpecs();
+            alert('✓ Configuration updated!');
+        }
+
+        function resetConfig() {
+            location.reload();
+        }
+
+        function triggerAccessDenied() {
+            document.getElementById('mainContainer').classList.add('blur-screen');
+            document.getElementById('deniedOverlay').classList.add('show');
+            document.getElementById('configBtn').style.display = 'none';
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', initializePage);
+    </script>
+</body>
+</html>
+
+
+
